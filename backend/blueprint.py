@@ -1,0 +1,271 @@
+from typing import Self
+from room import Room
+from random import randrange, shuffle
+
+
+class Blueprint():
+    """A small maze, describing how the areas of a larger maze are connected"""
+
+    def __init__(self, area_count: int, area_size: int, assign_room_numbers: bool = False):
+        """Creates a new, empty blueprint with size equal to area_count"""
+        self.area_count: int = area_count
+        self.area_size: int = area_size
+        self.size: int = area_count
+        self.rooms: list[Room] = []
+        self.map: list[list[Room]] = []
+        self._setup(assign_room_numbers)
+
+    def get_directions(self) -> list[int]:
+        """Generates the four compass direction in a random order"""
+        directions = [0, 1, 2, 3]
+        shuffle(directions)
+        return directions
+
+    def sort_by_connections(self) -> None:
+        """Sorts rooms so that each room
+        is reachable from rooms preceding it in the list"""
+        index = 0
+        result = [self.rooms[0]]
+
+        while index < len(self.rooms):
+            room = result[index]
+
+            for neighbor in self.get_connections(room):
+                if neighbor not in result:
+                    result.append(neighbor)
+            index += 1
+        self.rooms = result
+
+    def randomize_areas(self) -> Self:
+        """Returns a new blueprint with the same areas and connections,
+        but with shuffled area locations"""
+        blueprint: Blueprint = Blueprint(
+            self.area_count, self.area_size, False)
+        available_placements = []
+        available_directions = [None]
+        self.sort_by_connections()
+
+        # I need a shuffled list of all coordinates in the maze
+        for x in range(self.size):
+            for y in range(self.size):
+                available_placements.append((x, y))
+        shuffle(available_placements)
+
+        while len(blueprint.rooms) < len(self.rooms):
+            if len(blueprint.rooms) == 0:
+                # Select a valid placement for the first room
+                placement = available_placements.pop()
+                original = self.get_room(0)
+                room = blueprint.get_location(*placement)
+                room.area = original.area
+                room.number = original.number
+                blueprint.rooms.append(room)
+                # Testingtesting!
+                blueprint.display()
+                input()
+                # Looking good!
+
+            # I've ensured this room connects to a room which has already been placed
+            # But I still need to figure out which room it connects to
+            original = self.get_room(len(blueprint.rooms))
+
+            for neighbor in self.get_connections(original):
+                for place in blueprint.rooms:
+                    if place.number == neighbor.number:
+                        room = place
+                        break
+
+            if len(blueprint.rooms) == len(available_directions):
+                # Generate a shuffled list of direction for the next room
+                directions = self.get_directions()
+                available_directions.append(directions)
+            else:
+                # Here I've failed to place some room
+                # Select a direction I haven't tried
+                directions = available_directions[len(blueprint.rooms)]
+
+            while True:
+                try:
+                    dir = directions.pop()
+
+                    try:
+                        next_room = blueprint.get_next_location(
+                            room.x, room.y, dir)
+                    except IndexError:
+                        continue
+
+                    if next_room.is_empty():
+                        # Success, set as previous room and go on to the next room
+                        next_room.area = original.area
+                        next_room.number = original.number
+                        blueprint.connect_rooms(room.x, room.y, dir)
+                        blueprint.rooms.append(next_room)
+
+                        # Testingtesting!
+                        blueprint.display()
+                        input()
+                        break
+                except IndexError:
+                    # Failure, out of directions
+                    # Stop trying to place this room
+                    # Remove the previous room and try to place it somewhere else
+                    available_directions.pop()
+                    last_room = blueprint.rooms[-1]
+
+                    # Undo everything I've done with this room
+                    for dir, path in enumerate(last_room.paths):
+                        if path == Room.OPEN:
+                            blueprint.connect_rooms(
+                                last_room.x, last_room.y, dir, Room.CLOSED)
+                    last_room.clear()
+                    blueprint.rooms.pop()
+
+                    # Testingtesting!
+                    print(f"Unable to place room {original.area}!")
+                    blueprint.display()
+                    input()
+                    break
+
+    def _setup(self, assign_room_numbers: bool = False) -> None:
+        """Initializes empty rooms"""
+        self.map = []
+        self.rooms = []
+        index = 0
+
+        for y in range(self.size):
+            row = []
+            for x in range(self.size):
+                room = Room(x, y, index, -1)
+                row.append(room)
+
+                if assign_room_numbers:
+                    self.rooms.append(room)
+                index += 1
+
+            self.map.append(row)
+
+    def get_room(self, index: int) -> Room:
+        """Returns a room
+
+        Raises:
+            IndexError"""
+        return self.rooms[index]
+
+    def get_connections(self, center: Room) -> list[Room]:
+        """Returns all rooms connected to the given room"""
+        result = []
+        for room in self.rooms:
+            if room.connected_to(center.number):
+                result.append(room)
+        return result
+
+    def has_area(self, area: int) -> bool:
+        """Returns true if there's any room belonging to the given area"""
+        for room in self.rooms:
+            if room.area == area:
+                return True
+        return False
+
+    def get_location(self, x: int, y: int) -> Room:
+        """Returns the room at (x, y).
+
+        Raises:
+            IndexError"""
+        return self.map[y][x]
+
+    def get_random_location(self, empty: bool = False) -> Room:
+        """Returns a random location"""
+        while True:
+            x = randrange(self.size)
+            y = randrange(self.size)
+
+            if empty == False:
+                return self.get_location(x, y)
+            elif empty and self.get_location(x, y).is_empty():
+                return self.get_location(x, y)
+
+    def get_next_location(self, x: int, y: int, dir: int = None) -> Room:
+        """Returns a room adjacent to the room at (x, y).
+        Give a direction or None for random
+
+        Raises:
+            IndexError"""
+        nx = x
+        ny = y
+
+        if dir == None:
+            dir = randrange(4)
+
+        if dir == Room.NORTH:
+            ny = y - 1
+        elif dir == Room.EAST:
+            nx = x + 1
+        elif dir == Room.SOUTH:
+            ny = y + 1
+        elif dir == Room.WEST:
+            nx = x - 1
+
+        if nx == -1 or ny == -1:
+            raise IndexError
+        else:
+            return self.get_location(nx, ny)
+
+    def connect_rooms(self, x: int, y: int, dir: int, connection: int = Room.OPEN) -> None:
+        """Create a two-way path between adjacent rooms"""
+        room = self.get_location(x, y)
+        next_room = self.get_next_location(x, y, dir)
+        room.set_path(dir, connection, next_room.number)
+        next_room.set_path(Room.reverse(dir), connection, room.number)
+
+    def display(self) -> None:
+        for row in self.map:
+            print()
+            for room in row:
+                if room.has_path(Room.NORTH):
+                    print(" || ", end="")
+                else:
+                    print("    ", end="")
+            print()
+            for room in row:
+                if room.has_path(Room.WEST):
+                    print("-", end="")
+                else:
+                    print(" ", end="")
+                if room.area == -1:
+                    print(" *", end="")
+                else:
+                    print(f"{room.area:2}", end="")
+                if room.has_path(Room.EAST):
+                    print("-", end="")
+                else:
+                    print(" ", end="")
+            print()
+            for room in row:
+                if room.has_path(Room.SOUTH):
+                    print(" || ", end="")
+                else:
+                    print("    ", end="")
+        print()
+
+
+if __name__ == "__main__":
+    blueprint: Blueprint = Blueprint(3, 3, True)
+    blueprint.get_location(0, 0).area = 0
+    blueprint.get_location(1, 0).area = 1
+    blueprint.get_location(2, 0).area = 2
+    blueprint.get_location(0, 1).area = 3
+    blueprint.get_location(1, 1).area = 4
+    blueprint.get_location(2, 1).area = 5
+    blueprint.get_location(0, 2).area = 6
+    blueprint.get_location(1, 2).area = 7
+    blueprint.get_location(2, 2).area = 8
+    blueprint.connect_rooms(0, 0, Room.EAST)
+    blueprint.connect_rooms(1, 0, Room.EAST)
+    blueprint.connect_rooms(1, 0, Room.SOUTH)
+    blueprint.connect_rooms(1, 1, Room.EAST)
+    blueprint.connect_rooms(1, 1, Room.WEST)
+    blueprint.connect_rooms(2, 1, Room.SOUTH)
+    blueprint.connect_rooms(0, 1, Room.SOUTH)
+    blueprint.connect_rooms(0, 2, Room.EAST)
+    blueprint.display()
+    blueprint.randomize_areas()

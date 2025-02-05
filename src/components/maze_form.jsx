@@ -13,15 +13,9 @@ export default function MazeForm() {
     }
 
     function SetConnections(index, value) {
-
         let item = { ...gridItems[index], connections: value };
         let newGridItems = { ...gridItems };
         newGridItems[index] = item;
-        // Item properly created and inserted
-        // console.log(item);
-        // console.log(newGridItems);
-        // But I get an error at maze_blueprint 19
-        // setGridItems(newGridItems);
     }
 
     function BuildGridItems(size) {
