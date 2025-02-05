@@ -6,14 +6,14 @@ from random import randrange, shuffle
 class Blueprint():
     """A small maze, describing how the areas of a larger maze are connected"""
 
-    def __init__(self, area_count: int, area_size: int, assign_room_numbers: bool = False):
+    def __init__(self, area_count: int, area_size: int):
         """Creates a new, empty blueprint with size equal to area_count"""
         self.area_count: int = area_count
         self.area_size: int = area_size
-        self.size: int = area_count
+        self.length: int = area_count
+        self.size: int = self.length**2
         self.rooms: list[Room] = []
         self.map: list[list[Room]] = []
-        self._setup(assign_room_numbers)
 
     def get_directions(self) -> list[int]:
         """Generates the four compass direction in a random order"""
@@ -39,15 +39,16 @@ class Blueprint():
     def randomize_areas(self) -> Self:
         """Returns a new blueprint with the same areas and connections,
         but with shuffled area locations"""
-        blueprint: Blueprint = Blueprint(
-            self.area_count, self.area_size, False)
+        blueprint: Blueprint = Blueprint(self.area_count, self.area_size)
+        blueprint.setup()
+        blueprint.rooms = []
         available_placements = []
         available_directions = [None]
         self.sort_by_connections()
 
         # I need a shuffled list of all coordinates in the maze
-        for x in range(self.size):
-            for y in range(self.size):
+        for x in range(self.length):
+            for y in range(self.length):
                 available_placements.append((x, y))
         shuffle(available_placements)
 
@@ -126,20 +127,18 @@ class Blueprint():
                     input()
                     break
 
-    def _setup(self, assign_room_numbers: bool = False) -> None:
+    def setup(self) -> None:
         """Initializes empty rooms"""
         self.map = []
         self.rooms = []
         index = 0
 
-        for y in range(self.size):
+        for y in range(self.length):
             row = []
-            for x in range(self.size):
+            for x in range(self.length):
                 room = Room(x, y, index, -1)
                 row.append(room)
-
-                if assign_room_numbers:
-                    self.rooms.append(room)
+                self.rooms.append(room)
                 index += 1
 
             self.map.append(row)
@@ -151,6 +150,11 @@ class Blueprint():
             IndexError"""
         return self.rooms[index]
 
+    def get_room_of_number(self, number: int) -> Room:
+        for room in self.rooms:
+            if room.number == number:
+                return room
+
     def get_connections(self, center: Room) -> list[Room]:
         """Returns all rooms connected to the given room"""
         result = []
@@ -158,6 +162,11 @@ class Blueprint():
             if room.connected_to(center.number):
                 result.append(room)
         return result
+
+    def has_area_connection(self, area_1: int, area_2: int) -> bool:
+        """Returns true if area_1 and area_2 are connected"""
+        room = self.get_room_of_number(area_1)
+        return room.connected_to(area_2)
 
     def has_area(self, area: int) -> bool:
         """Returns true if there's any room belonging to the given area"""
@@ -176,8 +185,8 @@ class Blueprint():
     def get_random_location(self, empty: bool = False) -> Room:
         """Returns a random location"""
         while True:
-            x = randrange(self.size)
-            y = randrange(self.size)
+            x = randrange(self.length)
+            y = randrange(self.length)
 
             if empty == False:
                 return self.get_location(x, y)
@@ -250,6 +259,7 @@ class Blueprint():
 
 if __name__ == "__main__":
     blueprint: Blueprint = Blueprint(3, 3, True)
+    blueprint.setup()
     blueprint.get_location(0, 0).area = 0
     blueprint.get_location(1, 0).area = 1
     blueprint.get_location(2, 0).area = 2

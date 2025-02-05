@@ -49,11 +49,15 @@ class Room():
         self.number = -1
         self.area = -1
 
+    def is_empty(self) -> bool:
+        """Returns true if room details haven't been set"""
+        return self.area == -1
+
+    def is_unconnected(self) -> bool:
+        """Returns true if room doesn't connect to any other room"""
+        return len(self.connections) == 0
+
     @staticmethod
     def reverse(dir: int) -> int:
         """Returns the reverse direction"""
         return (dir + 2) % 4
-
-    def is_empty(self) -> bool:
-        """Returns true if room details haven't been set"""
-        return self.area == -1
