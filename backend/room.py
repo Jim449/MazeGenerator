@@ -7,12 +7,13 @@ class Room():
     SOUTH = 2
     WEST = 3
 
-    def __init__(self, x: int, y: int, number: int, area: int):
+    def __init__(self, x: int, y: int, number: int = -1, area: int = -1, trail: int = -1):
         """Creates an empty room at (x, y)"""
         self.x: int = x
         self.y: int = y
         self.number: int = number
         self.area: int = area
+        self.trail: int = trail
         self.paths: list[int] = [0, 0, 0, 0]
         self.connections: list[int] = []
 
