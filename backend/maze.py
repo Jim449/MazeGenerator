@@ -2,17 +2,18 @@ from room import Room
 from blueprint import Blueprint
 from trail import Trail
 from random import shuffle
+from maze_exceptions import IllegalMazeError
 
 
 class Maze(Blueprint):
     """A maze"""
 
-    def __init__(self, area_count: int, area_size: int):
+    def __init__(self, area_count: int, area_length: int):
         """Generates an empty maze"""
-        super().__init__(area_count, area_size)
-        self.length: int = area_count * area_size
+        super().__init__(area_count, area_length)
+        self.length: int = area_count * area_length
         self.size: int = self.length**2
-        self.areas: dict[int, list[Room]] = dict()
+        self.areas: list[list[Room]] = [[] for x in range(area_count**2)]
         self.blueprint: Blueprint = None
         self.trails: list[Trail] = []
 
@@ -24,22 +25,21 @@ class Maze(Blueprint):
 
         for y in range(self.length):
             row = []
-            blueprint_y = y // self.area_size
+            blueprint_y = y // self.area_length
 
             for x in range(self.length):
-                blueprint_x = x // self.area_size
+                blueprint_x = x // self.area_length
                 room = Room(x, y, number=-1, area=-1)
                 area = blueprint.get_location(blueprint_x, blueprint_y).area
                 self.set_area(room, area)
-                row.append(Room(x, y, number=-1,
-                                area=blueprint.get_location(blueprint_x, blueprint_y).area))
+                row.append(room)
             self.map.append(row)
 
     def get_area(self, id: int) -> list[Room]:
         """Returns all rooms of a given area.
 
         Raises:
-            KeyError"""
+            IndexError"""
         return self.areas[id]
 
     def find_area_neighbors(self, room: Room, discovered: set[Room]) -> set[Room]:
@@ -59,32 +59,34 @@ class Maze(Blueprint):
         return discovered
 
     def check_area_unity(self, id: int) -> bool:
-        """Returns true if the area 'id' is valid
+        """Returns true if the area with the given id is valid
         and not broken up into distinct parts"""
         area = self.get_area(id)
         start = area[0]
         discovered = {start}
         discovered = self.find_area_neighbors(start, discovered)
-        return len(area) == len(discovered)
+        return len(discovered) == len(area)
 
-    def set_area(self, room: Room, area: int) -> bool:
-        """Assigns an area to a room"""
+    def set_area(self, room: Room, area: int) -> None:
+        """Assigns an area to a room. If this results in
+        an area splitting into distinct parts, an error is raised
+
+        Raises:
+            IllegalMazeError"""
         old_area = room.area
         room.area = area
 
         if old_area == -1:
-            if area in self.areas:
-                self.get_area(area).append(room)
-            else:
-                self.areas[area] = [room]
-            return True
-        elif self.check_area_unity(old_area):
+            self.get_area(area).append(room)
+        else:
             self.get_area(old_area).remove(room)
             self.get_area(area).append(room)
-            return True
-        else:
-            # Or raise error
-            return False
+
+            if self.check_area_unity(old_area) == False:
+                room.area = old_area
+                self.get_area(area).remove(room)
+                self.get_area(old_area).append(room)
+                raise IllegalMazeError
 
     def get_area_border(self, area_1: int, area_2: int = None) -> tuple[Room]:
         """Returns a room of area_1, a room of area_2
@@ -99,7 +101,9 @@ class Maze(Blueprint):
                 try:
                     neighbor = self.get_next_location(room.x, room.y, dir)
 
-                    if area_2 == None or neighbor.area == area_2:
+                    if area_2 == None and neighbor.area != area_1:
+                        return (room, neighbor, dir)
+                    elif area_2 != None and neighbor.area == area_2:
                         return (room, neighbor, dir)
                 except IndexError:
                     pass
@@ -191,6 +195,43 @@ class Maze(Blueprint):
                     self.trails.append(
                         Trail(len(self.trails), area_2, neighbor))
 
+    def confirm_area_sizes(self, size: int) -> bool:
+        """Checks that all areas are of the the correct size"""
+        for rooms in self.areas:
+            if len(rooms) != size:
+                return False
+        return True
+
+    def exchange_area_rooms(self) -> None:
+        """All areas exchanges rooms in order to randomize shapes"""
+        area_size = self.area_length**2
+        max_difference = 3
+
+        while True:
+            for area in range(self.area_count**2):
+                room, neighbor, dir = self.get_area_border(area)
+
+                size_1 = len(self.get_area(area)) + 1
+                size_2 = len(self.get_area(neighbor.area)) - 1
+
+                input(f"Area {area} wants to grab a room from {neighbor.area} for sizes {
+                      size_1} to {size_2}, max diff {max_difference}")
+
+                if size_1 - size_2 <= max_difference:
+                    try:
+                        self.set_area(neighbor, area)
+                        # Testingtesting!
+                        self.display()
+                    except IllegalMazeError:
+                        print("Illegal maze error!")
+                else:
+                    print("Denied!")
+
+            if max_difference > 1:
+                max_difference -= 1
+            elif self.confirm_area_sizes(area_size):
+                return
+
 
 if __name__ == "__main__":
     blueprint = Blueprint(3, 3)
@@ -216,6 +257,17 @@ if __name__ == "__main__":
     blueprint.display()
     maze = Maze(3, 3)
     maze.build_maze(blueprint)
-    maze.construct_connections()
-    maze.construct_areas()
     maze.display()
+    # for area in maze.areas:
+    #     print()
+    #     for room in area:
+    #         print(room.area, end=", ")
+    maze.exchange_area_rooms()
+    # maze.construct_connections()
+    # maze.construct_areas()
+    # maze.display()
+
+    # Working on area room exchange
+    # Problem is, this might prevent area connections from being made
+    # In which case I'll just try again?
+    # I may want to to create a maze copy for that

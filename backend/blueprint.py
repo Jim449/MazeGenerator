@@ -6,10 +6,10 @@ from random import randrange, shuffle
 class Blueprint():
     """A small maze, describing how the areas of a larger maze are connected"""
 
-    def __init__(self, area_count: int, area_size: int):
+    def __init__(self, area_count: int, area_length: int):
         """Creates a new, empty blueprint with size equal to area_count"""
         self.area_count: int = area_count
-        self.area_size: int = area_size
+        self.area_length: int = area_length
         self.length: int = area_count
         self.size: int = self.length**2
         self.rooms: list[Room] = []
@@ -39,7 +39,7 @@ class Blueprint():
     def randomize_areas(self) -> Self:
         """Returns a new blueprint with the same areas and connections,
         but with shuffled area locations"""
-        blueprint: Blueprint = Blueprint(self.area_count, self.area_size)
+        blueprint: Blueprint = Blueprint(self.area_count, self.area_length)
         blueprint.setup()
         blueprint.rooms = []
         available_placements = []
@@ -258,7 +258,7 @@ class Blueprint():
 
 
 if __name__ == "__main__":
-    blueprint: Blueprint = Blueprint(3, 3, True)
+    blueprint: Blueprint = Blueprint(3, 3)
     blueprint.setup()
     blueprint.get_location(0, 0).area = 0
     blueprint.get_location(1, 0).area = 1
