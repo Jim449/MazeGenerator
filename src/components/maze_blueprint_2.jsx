@@ -10,7 +10,7 @@ export default function MazeBlueprint() {
     const [blueprint, setBlueprint] = useState(GenerateBlueprint());
     const [gridItems, setGridItems] = useState(blueprint.rooms);
 
-    let gridStyle = "repeat(" + Math.floor(Math.sqrt(gridItems.length)) + ", 100px";
+    // let gridStyle = "repeat(" + Math.floor(Math.sqrt(gridItems.length)) + ", 100px";
 
     useEffect(() => {
         setBlueprintList([{
@@ -87,7 +87,7 @@ export default function MazeBlueprint() {
                 east: false,
                 south: false,
                 west: false
-            },]
+            }]
         }]);
     },
         [])
@@ -110,16 +110,43 @@ export default function MazeBlueprint() {
         setAreaAmount(newBlueprint.area_amount);
         setAreaSize(newBlueprint.area_size);
         setBlueprint(newBlueprint);
-        setGridItems(blueprint.rooms);
+        setGridItems(newBlueprint.rooms);
     }
 
     function DeleteBlueprint(event) {
         event.preventDefault();
         setBlueprintList(blueprintList.filter(item => item !== blueprint));
         setBlueprint(blueprintList[0]);
-        setAreaAmount(blueprint.area_amount);
-        setAreaSize(blueprint.area_size);
-        setGridItems(blueprint.rooms);
+        setAreaAmount(blueprintList[0].area_amount);
+        setAreaSize(blueprintList[0].area_size);
+        setGridItems(blueprintList[0].rooms);
+    }
+
+    function SaveBlueprint(event) {
+        event.preventDefault();
+        let index = -1;
+
+        for (let i = 0; i < blueprintList.length; i++) {
+            if (blueprintList[i].id === blueprint.id) {
+                index = i;
+                break;
+            }
+        }
+        if (index !== -1) {
+            console.log("Saving!");
+            const newBlueprintList = [...blueprintList];
+            const rooms = [...gridItems];
+            const newBlueprint = { ...blueprint };
+            newBlueprint.rooms = rooms;
+            newBlueprint.area_amount = areaAmount;
+            newBlueprint.area_size = areaSize;
+            newBlueprintList[index] = newBlueprint;
+            setBlueprintList(newBlueprintList);
+            setBlueprint(newBlueprint);
+        }
+        else {
+            console.log("Not found!");
+        }
     }
 
     function SelectAreaAmount(event) {
@@ -135,7 +162,6 @@ export default function MazeBlueprint() {
         event.preventDefault();
         let item = { ...gridItems[index] };
         let newGridItems = [...gridItems];
-        console.log("Changing connections of room " + index + " in direction " + direction + " from " + item[direction] + " to " + !item[direction]);
         item[direction] = !item[direction];
         newGridItems[index] = item;
         setGridItems(newGridItems);
@@ -185,26 +211,34 @@ export default function MazeBlueprint() {
             <input type="checkbox" id="randomize-areas" name="randomize-areas"></input>
         </p>
 
-        <div className="grid m-4 border border-stone-300" style={{ gridTemplateColumns: gridStyle, gridTemplateRows: gridStyle }}>
-            {gridItems.map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)}
-            {/* <MazeRoom id={0} west={true} east={true}></MazeRoom>
-            <MazeRoom id={1} west={true} east={true}></MazeRoom>
-            <MazeRoom id={2} west={true} south={true}></MazeRoom>
-            <MazeRoom id={3} south={true} east={true}></MazeRoom>
-            <MazeRoom id={4} west={true} north={true}></MazeRoom>
-            <MazeRoom id={5} north={true} south={true}></MazeRoom>
-            <MazeRoom id={6} north={true} east={true}></MazeRoom>
-            <MazeRoom id={7} east={true} west={true}></MazeRoom>
-            <MazeRoom id={8} north={true} west={true}></MazeRoom> */}
+        <div className="flex items-center">
+            {gridItems.filter(item => item.y === 0).map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)}
+        </div>
+        <div className="flex items-center">
+            {gridItems.filter(item => item.y === 1).map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)}
+        </div>
+        <div className="flex items-center">
+            {gridItems.filter(item => item.y === 2).map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)}
+        </div>
+        <div className="flex items-center">
+            {gridItems.filter(item => item.y === 3).map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)}
+        </div>
+        <div className="flex items-center">
+            {gridItems.filter(item => item.y === 4).map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)}
         </div>
 
-        <p className="my-2 text-xs">
-            Click on a number to change the amount of paths between maze areas.
+        {/* <div className="grid m-4 border border-stone-300" style={{ gridTemplateColumns: gridStyle, gridTemplateRows: gridStyle }}> */}
+        {/* {gridItems.map((item) => <MazeRoom key={item.key} props={item} ChangeConnections={ChangeConnections}></MazeRoom>)} */}
+        {/* </div> */}
+
+        <p className="my-2 text-xs text-center">
+            Click on a space between maze sections to add a passage.<br />
+            Passages can be single way or two way.
         </p>
         <div className="flex justify-items-center gap-1 my-2">
             <Button>Generate maze</Button>
             <Button>Save blueprint as...</Button>
-            <Button>Save blueprint</Button>
+            <Button onClick={SaveBlueprint}>Save blueprint</Button>
             <Button onClick={DeleteBlueprint}>Delete blueprint</Button>
         </div>
     </form>
