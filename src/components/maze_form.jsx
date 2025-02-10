@@ -91,7 +91,7 @@ export default function MazeForm() {
             Click on a number to change the amount of paths between maze areas.
         </p>
         <p className="my-2">
-            <Button text="Generate maze"></Button>
+            <Button>Generate maze</Button>
         </p>
     </>
 }

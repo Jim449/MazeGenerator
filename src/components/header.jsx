@@ -6,6 +6,7 @@ export default function Header() {
             <img src="src/assets/maze.png" className="h-10" />
             <ul className="flex flex-row gap-4 ml-4">
                 <li><Link className="hover:underline" to="/">Home</Link></li>
+                <li><Link className="hover:underline" to="/blueprint">Blueprint</Link></li>
                 <li><Link className="hover:underline" to="/maze">Maze</Link></li>
                 <li><Link className="hover:underline" to="/about">About</Link></li>
             </ul>
