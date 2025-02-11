@@ -1,6 +1,6 @@
 import Header from "../components/header.jsx"
 import Footer from "../components/footer.jsx"
-import MazeBlueprint from "../components/maze_blueprint_2.jsx"
+import MazeBlueprint from "../components/maze_blueprint.jsx"
 import Head from "../components/head.jsx"
 
 export default function Blueprint() {

@@ -15,7 +15,7 @@ const router = createBrowserRouter([{
   element: <About />
 },
 {
-  path: "/blueprint",
+  path: "/blueprint/:blueprintId?",
   element: <Blueprint />
 },
 {

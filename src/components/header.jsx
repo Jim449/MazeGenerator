@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 export default function Header() {
     return <header className="h-10 bg-stone-200">
         <nav className="flex flex-row h-full items-center border-b-1 border-stone-300">
-            <img src="src/assets/maze.png" className="h-10" />
+            <img src="/public/images/maze.png" className="h-10" />
             <ul className="flex flex-row gap-4 ml-4">
                 <li><Link className="hover:underline" to="/">Home</Link></li>
                 <li><Link className="hover:underline" to="/blueprint">Blueprint</Link></li>
