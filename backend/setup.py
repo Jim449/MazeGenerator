@@ -1,4 +1,4 @@
-import models as m
+import backend.app.api.v1.core.models as m
 from database import engine
 from sqlalchemy.orm import Session
 

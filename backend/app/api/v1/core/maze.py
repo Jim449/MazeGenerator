@@ -1,8 +1,8 @@
-from room import Room
-from blueprint import Blueprint
-from trail import Trail
+from app.api.v1.core.room import Room
+from app.api.v1.core.blueprint import Blueprint
+from app.api.v1.core.trail import Trail
 from random import shuffle
-from maze_exceptions import IllegalMazeError
+from app.api.v1.core.maze_exceptions import IllegalMazeError
 
 
 class Maze(Blueprint):

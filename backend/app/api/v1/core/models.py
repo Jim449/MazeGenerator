@@ -4,12 +4,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
-    pass
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True)
 
 
 class BlueprintModel(Base):
     __tablename__ = "blueprint"
-    id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, default="Blueprint")
     area_length: Mapped[int] = mapped_column(Integer)
     area_count: Mapped[int] = mapped_column(Integer)
@@ -23,7 +23,6 @@ class BlueprintModel(Base):
 
 class BlueprintAreaModel(Base):
     __tablename__ = "blueprint_area"
-    id: Mapped[int] = mapped_column(primary_key=True)
     blueprint_id: Mapped[int] = mapped_column(ForeignKey("blueprint.id"))
     x: Mapped[int] = mapped_column(Integer)
     y: Mapped[int] = mapped_column(Integer)
@@ -35,3 +34,25 @@ class BlueprintAreaModel(Base):
 
     def __repr__(self) -> str:
         return f"Area at ({self.x}, {self.y}) with connections NESW {self.north}, {self.east}, {self.south}, {self.west}"
+
+
+class Direction(Base):
+    __tablename__ = "direction"
+    value: Mapped[int] = mapped_column(Integer, unique=True)
+    name: Mapped[str] = mapped_column(String(20), unique=True)
+
+    def __repr__(self) -> str:
+        return f"Direction {self.name}"
+
+
+class BlueprintMessageModel(Base):
+    __tablename__ = "message"
+    text: Mapped[str] = mapped_column(String(2000))
+    direction: Mapped[int] = mapped_column(
+        ForeignKey("direction.id"), nullable=True)
+    distance: Mapped[int] = mapped_column(Integer, nullable=True)
+    blueprint_area_id: Mapped[id] = mapped_column(
+        ForeignKey("blueprint_area.id"))
+
+    def __repr__(self) -> str:
+        return f"Message {self.text:20}..."

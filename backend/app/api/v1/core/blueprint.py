@@ -1,5 +1,5 @@
 from typing import Self
-from room import Room
+from app.api.v1.core.room import Room
 from random import randrange, shuffle
 
 
